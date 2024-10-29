@@ -21,12 +21,18 @@ public class ChatHandle extends TextWebSocketHandler {
     CopyOnWriteArrayList<WebSocketSession> sessions = new CopyOnWriteArrayList<WebSocketSession>();
     ArrayList<String> mensajes = new ArrayList<String>();
 
+    private static final String WEBSOCKET_INFO = "WebSocket: Permite la comunicacion estable, constante y bidireccional entre el cliente y el sevidor. Funciona en el puerto 80 o 443.";
+
     ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public void afterConnectionEstablished (WebSocketSession session) throws Exception {
         super.afterConnectionEstablished(session);
         sessions.add(session);
+
+        for (String mensaje : mensajes) {
+            session.sendMessage(new TextMessage(mensaje));
+        }
     }
 
     @Override
@@ -37,12 +43,16 @@ public class ChatHandle extends TextWebSocketHandler {
 
     @Override
     public void handleTextMessage (WebSocketSession session, TextMessage message) throws Exception {
-        super.handleTextMessage(session, message);
+        String payload = message.getPayload();
 
-        mensajes.add(message.getPayload());
+        if (payload.toLowerCase().contains("websocket")) {
+            payload += "\n" + WEBSOCKET_INFO;
+        }
 
-        for(WebSocketSession webSocketSession : sessions){
-            webSocketSession.sendMessage(message);
+        mensajes.add(payload);
+
+        for (WebSocketSession webSocketSession : sessions) {
+            webSocketSession.sendMessage(new TextMessage(payload));
         }
     }
 
